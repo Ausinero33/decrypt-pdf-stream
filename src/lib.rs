@@ -5,6 +5,8 @@ use aes::cipher::BlockEncrypt;
 use aes::cipher::generic_array::GenericArray;
 use hex::FromHex;
 use wasm_bindgen::prelude::*;
+use rc4::{consts::*, KeyInit, StreamCipher};
+use rc4::{Rc4};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -50,7 +52,7 @@ fn split_in_blocks(data: Vec<u8>) -> Vec<[u8; 16]> {
 }
 
 #[wasm_bindgen]
-pub fn alg_1(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8> {
+pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8> {
     let obj_num = &obj_num.to_le_bytes()[0..3];
     let gen_num = &gen_num.to_le_bytes()[0..2];
 
@@ -59,11 +61,9 @@ pub fn alg_1(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8>
     new_key.append(&mut gen_num.to_vec());
 
     let mut data = data;
-    // let num_data = data.parse::<i32>().unwrap();
-    // let ultimo_byte = data.as_bytes().last().unwrap();
-    let ultimo_byte = data.last().unwrap();
+    let last_byte = data.last().unwrap();
 
-    if ultimo_byte % 16 == 0 {
+    if last_byte % 16 == 0 {
         // AES
         console_log!("Using AES");
 
@@ -102,7 +102,7 @@ pub fn alg_1(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8>
 }
 
 #[wasm_bindgen]
-pub fn alg_2(o: &str, p: i32, id: &str) -> Vec<u8> {
+pub fn get_key(o: &str, p: i32, id: &str) -> Vec<u8> {
     let mut pswd_padded = Vec::from(PADDING);
 
     let mut o = Vec::from_hex(o).unwrap();
@@ -114,24 +114,17 @@ pub fn alg_2(o: &str, p: i32, id: &str) -> Vec<u8> {
     let mut id = Vec::from_hex(id).unwrap();
     pswd_padded.append(&mut id);
 
-    // console_log!("{:02X?}", pswd_padded);
 
     let mut hash = md5::compute(pswd_padded);
-
-    // console_log!("{:02X?} {}", hash.as_slice(), hash.len());
 
     for _i in 0..50 {
         hash = md5::compute(hash.as_slice());
     }
 
-    // console_log!("{:02X?} {}", hash.0, hash.len());
-
     hash.0.to_vec()
 }
 
-use rc4::{consts::*, KeyInit, StreamCipher};
-use rc4::{Rc4};
-
+/*
 fn apply_xor(vec: &Vec<u8>, val: u8) -> Vec<u8> {
     let mut vec_ret = Vec::<u8>::new();
 
@@ -164,3 +157,4 @@ pub fn test_alg2() {
 
     console_log!("{:02X?}", data.as_slice());
 }
+*/
