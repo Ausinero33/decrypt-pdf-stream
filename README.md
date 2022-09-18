@@ -4,7 +4,7 @@
 
 </div>
 
-## Excample
+## Example
 
 <pre>
     <code>
