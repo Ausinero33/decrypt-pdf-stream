@@ -64,7 +64,7 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     let last_byte = data.last().unwrap();
 
     if last_byte % 16 == 0 {
-        // AES
+        // TODO AES (Probably not working as intended)
         console_log!("Using AES");
 
         new_key.append(&mut vec![0x73, 0x41, 0x6C, 0x54]);
@@ -123,38 +123,3 @@ pub fn get_key(o: &str, p: i32, id: &str) -> Vec<u8> {
 
     hash.0.to_vec()
 }
-
-/*
-fn apply_xor(vec: &Vec<u8>, val: u8) -> Vec<u8> {
-    let mut vec_ret = Vec::<u8>::new();
-
-    for i in vec {
-        vec_ret.push(*i ^ val);
-    }
-
-    vec_ret
-}
-
-#[wasm_bindgen]
-pub fn test_alg2() {
-    let hash = alg_2("347a1c17c0286dc0bdad432e7246432b67404a5a19737b19ea10ea0b6b39f89e", -1044, "a07832b34bb0befc21122fcc7cf669f9");
-
-    let mut padding = Vec::from(PADDING);
-    let mut id = Vec::from_hex("a07832b34bb0befc21122fcc7cf669f9").unwrap();
-    padding.append(&mut id);
-
-    let hash_padding = md5::compute(padding);
-
-    let mut rc4 = Rc4::<U16>::new(hash.as_slice().into());
-    let mut data = hash_padding.0.to_vec();
-    rc4.apply_keystream(&mut data);
-
-    for i in 1..=19 {
-        let key = apply_xor(&hash, i);
-        let mut rc4 = Rc4::<U16>::new(key.as_slice().into());
-        rc4.apply_keystream(&mut data);
-    }
-
-    console_log!("{:02X?}", data.as_slice());
-}
-*/
