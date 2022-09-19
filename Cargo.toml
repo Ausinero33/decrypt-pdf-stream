@@ -3,6 +3,7 @@ name = "decrypt-pdf-stream"
 version = "0.1.5"
 authors = ["Gonzalo <gonzaloburgosdelahera@|gmail.com>"]
 edition = "2018"
+repository = "https://github.com/Ausinero33/decrypt-pdf-stream/"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
