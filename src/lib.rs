@@ -32,24 +32,6 @@ use md5;
 const PADDING: [u8; 32] = [0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
                            0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A];
 
-fn split_in_blocks(data: Vec<u8>) -> Vec<[u8; 16]> {
-    let i = 0;
-    let vec = Vec::new();
-    
-    while i < data.len() {
-        let mut arr: [u8; 16] = [0; 16];
-
-        for j in 0..16 {
-            if i + j < data.len() {
-                arr[i] = data[i + j];
-            } else {
-                arr[i] = 0;
-            }
-        }
-    }
-
-    vec
-}
 
 #[wasm_bindgen]
 pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8> {
@@ -64,28 +46,9 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     let last_byte = data.last().unwrap();
 
     if last_byte % 16 == 0 {
-        // TODO AES (Probably not working as intended)
-        console_log!("Using AES");
+        // TODO AES
 
-        new_key.append(&mut vec![0x73, 0x41, 0x6C, 0x54]);
-
-        let hash = md5::compute(new_key);
-
-        let key = GenericArray::from(hash.0);
-    
-        let cipher = Aes128::new(&key);
-
-        let blocks = split_in_blocks(data);        
-
-        let mut encrypted_blocks: Vec<u8> = Vec::new();
-        for i in blocks {
-            let mut block = GenericArray::from(i);
-            cipher.encrypt_block(&mut block);
-            let mut block = block.to_vec();
-            encrypted_blocks.append(&mut block);
-        }
-
-        encrypted_blocks
+        panic!("AES not yet implemented.")
 
     } else {
         // RC4
