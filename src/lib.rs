@@ -21,6 +21,9 @@ extern {
 
     #[wasm_bindgen(js_namespace = console, js_name = log)]
     fn log_arr(arr: &[u8]);
+
+    #[wasm_bindgen(js_namespace = console)]
+    fn error(msg: &str);
 }
 
 macro_rules! console_log {
@@ -48,7 +51,9 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     if last_byte % 16 == 0 {
         // TODO AES
 
-        panic!("AES not yet implemented.")
+        error("AES not yet implemented!");
+        
+        Vec::<u8>::new()
 
     } else {
         // RC4
