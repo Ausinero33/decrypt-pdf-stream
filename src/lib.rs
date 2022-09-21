@@ -69,7 +69,7 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     let last_byte = data.last().unwrap();
 
     if last_byte % 16 == 0 {
-        // TODO AES (Probably not working as intended)
+        // AES (Testing needed)
         console_log!("Using AES");
 
         new_key.append(&mut vec![0x73, 0x41, 0x6C, 0x54]);
