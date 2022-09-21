@@ -1,11 +1,11 @@
 mod utils;
 
-use aes::cipher::generic_array::{GenericArray, arr};
+use aes::cipher::generic_array::GenericArray;
 use hex::FromHex;
 use wasm_bindgen::prelude::*;
 use rc4::{consts::*, KeyInit, StreamCipher};
 use rc4::{Rc4};
-use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
+use aes::cipher::{BlockDecryptMut, KeyIvInit};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
