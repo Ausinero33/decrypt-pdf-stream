@@ -60,7 +60,7 @@ fn split_in_blocks(data: &Vec<u8>) -> Vec<GenericArray<u8, U16>> {
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
 #[wasm_bindgen]
-pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8> {
+pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec<u8> {
     let obj_num = &obj_num.to_le_bytes()[0..3];
     let gen_num = &gen_num.to_le_bytes()[0..2];
 
@@ -68,7 +68,7 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     new_key.append(&mut obj_num.to_vec());
     new_key.append(&mut gen_num.to_vec());
 
-    let mut data = data;
+    let mut data = stream;
     let last_byte = data.last().unwrap();
 
     if last_byte % 16 == 0 {
