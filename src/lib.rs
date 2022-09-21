@@ -1,12 +1,11 @@
 mod utils;
 
-use aes::Aes128;
-use aes::cipher::BlockEncrypt;
-use aes::cipher::generic_array::GenericArray;
+use aes::cipher::generic_array::{GenericArray, arr};
 use hex::FromHex;
 use wasm_bindgen::prelude::*;
 use rc4::{consts::*, KeyInit, StreamCipher};
 use rc4::{Rc4};
+use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -35,6 +34,30 @@ use md5;
 const PADDING: [u8; 32] = [0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
                            0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A];
 
+fn split_in_blocks(data: &Vec<u8>) -> Vec<GenericArray<u8, U16>> {
+    let mut i = 0;
+    let mut vec = Vec::new();
+    
+    while i < data.len() {
+        let mut arr: GenericArray<u8, U16> = GenericArray::clone_from_slice(&vec![0x00; 16]);
+
+        for j in 0..16 {
+            if i + j < data.len() {
+                arr[j] = data[i + j];
+            } else {
+                arr[j] = 0;
+            }
+        }
+
+        i += 16;
+        vec.push(arr);
+        console_log!("A {:?}", arr.as_slice());
+    }
+
+    vec
+}
+
+type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
 #[wasm_bindgen]
 pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u8> {
@@ -49,11 +72,31 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, data: Vec<u8>) -> Vec<u
     let last_byte = data.last().unwrap();
 
     if last_byte % 16 == 0 {
-        // TODO AES
+        // AES (Testing needed)
+        console_log!("Using AES");
 
-        error("AES not yet implemented!");
-        
-        Vec::<u8>::new()
+        new_key.append(&mut vec![0x73, 0x41, 0x6C, 0x54]);
+
+        let hash = md5::compute(new_key);
+
+        let key = hash.0;
+        let mut iv = [0u8; 16];
+        for (elem, i) in data.iter().zip(0..16) {
+            iv[i] = *elem;
+        }
+
+        let mut blocks = split_in_blocks(&data);
+
+        Aes128CbcDec::new(&key.into(), &iv.into())
+                    .decrypt_blocks_mut(&mut blocks);
+
+        let mut result = Vec::new();
+        for i in blocks {
+            let mut block_vect = i.to_vec();
+            result.append(&mut block_vect);
+        }
+
+        result
 
     } else {
         // RC4
