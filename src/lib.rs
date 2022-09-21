@@ -2,6 +2,7 @@ mod utils;
 
 use aes::cipher::generic_array::GenericArray;
 use hex::FromHex;
+use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use rc4::{consts::*, KeyInit, StreamCipher};
 use rc4::{Rc4};
@@ -114,6 +115,8 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec
 
 #[wasm_bindgen]
 pub fn get_key(o: &str, p: i32, id: &str) -> Vec<u8> {
+    set_panic_hook();
+
     let mut pswd_padded = Vec::from(PADDING);
 
     let mut o = Vec::from_hex(o).unwrap();
