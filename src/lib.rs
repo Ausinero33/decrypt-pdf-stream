@@ -1,14 +1,15 @@
 mod utils;
 
+use std::sync::Mutex;
+
 use aes::cipher::BlockEncryptMut;
-use aes::cipher::generic_array::GenericArray;
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use rc4::{consts::*, KeyInit, StreamCipher};
 use rc4::{Rc4};
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
-use rand::prelude::*;
+use md5;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -35,51 +36,21 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-use md5;
+struct Config {
+    use_aes: bool
+}
 
 const PADDING: [u8; 32] = [0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
                            0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A];
-
-// fn split_in_blocks(data: &Vec<u8>) -> Vec<GenericArray<u8, U16>> {
-//     let mut i = 0;
-//     let mut vec = Vec::new();
-    
-//     while i < data.len() {
-//         let padding = 16 - (data.len() % 16);
-
-//         let mut arr: GenericArray<u8, U16> = GenericArray::clone_from_slice(&vec![padding as u8; 16]);
-
-//         for j in 0..(16 - padding) {
-//             if i + j < data.len() {
-//                 arr[j] = data[i + j];
-//             } else {
-//                 arr[j] = 0;
-//             }
-//         }
-
-//         i += 16;
-//         vec.push(arr);
-
-//         if padding == 0x10 {vec.push(arr)}
-
-//         console_log!("A {:?}", arr.as_slice());
-//     }
-
-//     vec
-// }
-
-// #[wasm_bindgen]
-// pub fn test_split_in_blocks() {
-//     let data = vec![0x01, 0x02, 0xF0];
-//     let blocks = split_in_blocks(&data);
-
-//     for i in blocks {
-//         assert_eq!(i.as_slice(), &[0x01, 0x02, 0xF0, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D]);
-//     }
-// }
+static CFG: Mutex<Config> = Mutex::new(Config { use_aes: false });
 
 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
+
+#[wasm_bindgen]
+pub fn config(use_aes: bool) {
+    CFG.lock().unwrap().use_aes = use_aes;
+}
 
 #[wasm_bindgen]
 pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec<u8> {
@@ -91,9 +62,8 @@ pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec
     new_key.append(&mut gen_num.to_vec());
 
     let mut data = stream;
-    let last_byte = data.last().unwrap();
 
-    if /* last_byte % 16 == 0 */ true {
+    if CFG.lock().unwrap().use_aes {
         // AES (Testing needed)
         console_log!("Using AES");
 
@@ -119,7 +89,7 @@ pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec
 
         let mut pt = Aes128CbcEnc::new(&key.into(), &iv.into())
             .encrypt_padded_mut::<Pkcs7>(&mut data_extended, data_len)
-            .unwrap()
+            .unwrap_or_default()
             .to_vec();
 
         iv_vec.append(&mut pt);
@@ -149,9 +119,8 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec
     new_key.append(&mut gen_num.to_vec());
 
     let mut data = stream;
-    let last_byte = data.last().unwrap();
 
-    if /* last_byte % 16 == 0 */ true {
+    if CFG.lock().unwrap().use_aes {
         // AES (Testing needed)
         console_log!("Using AES");
 
