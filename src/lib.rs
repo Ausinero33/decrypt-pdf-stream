@@ -1,7 +1,5 @@
 mod utils;
 
-use std::sync::Mutex;
-
 use aes::cipher::BlockEncryptMut;
 use hex::FromHex;
 use utils::set_panic_hook;
@@ -84,7 +82,7 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i
         match cfm {
             "None" => data,
             "V2" => use_rc4(data, new_key),
-            "AESV2" => use_aes_encrypt(data, new_key),
+            "AESV2" => use_aes_decrypt(data, new_key),
             _ => panic!("Wrong CFM")
         }
     }
