@@ -52,6 +52,8 @@ pub fn config(use_aes: bool) {
     CFG.lock().unwrap().use_aes = use_aes;
 }
 
+// https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf
+
 #[wasm_bindgen]
 pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec<u8> {
     let obj_num = &obj_num.to_le_bytes()[0..3];
@@ -155,7 +157,7 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>) -> Vec
 }
 
 #[wasm_bindgen]
-pub fn get_key(o: &str, p: i32, id: &str) -> Vec<u8> {
+pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     set_panic_hook();
 
     let mut pswd_padded = Vec::from(PADDING);
@@ -169,11 +171,16 @@ pub fn get_key(o: &str, p: i32, id: &str) -> Vec<u8> {
     let mut id = Vec::from_hex(id).unwrap();
     pswd_padded.append(&mut id);
 
+    if rev >= 4 {
+        pswd_padded.append(&mut vec![0xFF, 0xFF, 0xFF, 0xFF]);
+    }
 
     let mut hash = md5::compute(pswd_padded);
 
-    for _i in 0..50 {
-        hash = md5::compute(hash.as_slice());
+    if rev >= 3 {
+        for _i in 0..50 {
+            hash = md5::compute(hash.as_slice());
+        }
     }
 
     hash.0.to_vec()
