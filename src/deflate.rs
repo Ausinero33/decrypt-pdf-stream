@@ -15,36 +15,36 @@ pub fn deflate(stream: Vec<u8>, column: i32) -> Vec<u8> {
     z.write_all(&stream[..]).unwrap();
     writer = z.finish().unwrap();
 
-    let mut val = 0;
-    let mut str = String::new();
+    // let mut val = 0;
+    // let mut str = String::new();
 
-    for i in &writer {
-        val += 1;
-        str.push_str(&format!("{:02X} ", i));
+    // for i in &writer {
+    //     val += 1;
+    //     str.push_str(&format!("{:02X} ", i));
 
-        if val == column + 1 {
-            val = 0;
-            str.push('\n');
-        }
-    }
-    console_log!("{}", str);
+    //     if val == column + 1 {
+    //         val = 0;
+    //         str.push('\n');
+    //     }
+    // }
+    // console_log!("{}", str);
 
     let c = column as usize;
     let writer = filter_up(writer, c);
 
-    let mut val = 0;
-    let mut str = String::new();
+    // let mut val = 0;
+    // let mut str = String::new();
 
-    for i in &writer {
-        val += 1;
-        str.push_str(&format!("{:02X} ", i));
+    // for i in &writer {
+    //     val += 1;
+    //     str.push_str(&format!("{:02X} ", i));
 
-        if val == column {
-            val = 0;
-            str.push('\n');
-        }
-    }
-    console_log!("{}", str);
+    //     if val == column {
+    //         val = 0;
+    //         str.push('\n');
+    //     }
+    // }
+    // console_log!("{}", str);
 
     writer
 }
@@ -65,15 +65,6 @@ fn filter_up(data: Vec<u8>, column: usize) -> Vec<u8> {
             res.push(data[i * pixels + j] + up);
         };
     }
-
-    // for i in 0..data.len() {
-    //     let up = match i.checked_sub(column + 1) {
-    //         Some(v) => res[v],
-    //         None => 0,
-    //     };
-
-    //     res[i] += up as u8;
-    // };
-
+    
     res
 }
