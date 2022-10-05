@@ -1,6 +1,6 @@
 [package]
 name = "decrypt-pdf-stream"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Gonzalo <gonzaloburgosdelahera@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/Ausinero33/decrypt-pdf-stream/"
