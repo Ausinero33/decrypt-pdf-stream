@@ -21,6 +21,7 @@ pub fn deflate(stream: Vec<u8>, column: i32) -> Vec<u8> {
     writer
 }
 
+#[allow(dead_code)]
 #[wasm_bindgen]
 pub fn format_stream(stream: Vec<u8>, w: Vec<i32>) -> String {
     assert!(w.len() == 3);
@@ -31,19 +32,19 @@ pub fn format_stream(stream: Vec<u8>, w: Vec<i32>) -> String {
     let mut i = 0;
     while i < stream.len() {
         for _j in 0..w[0] {
-            line.push_str(&format!("{:02X}", i));
+            line.push_str(&format!("{:02X}", stream[i]));
             i += 1;
         }
         line.push(' ');
 
         for _j in 0..w[1] {
-            line.push_str(&format!("{:02X}", i));
+            line.push_str(&format!("{:02X}", stream[i]));
             i += 1;
         }
         line.push(' ');
 
         for _j in 0..w[2] {
-            line.push_str(&format!("{:02X}", i));
+            line.push_str(&format!("{:02X}", stream[i]));
             i += 1;
         }
         line.push('\n');
