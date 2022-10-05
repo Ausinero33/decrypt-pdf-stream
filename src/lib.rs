@@ -1,6 +1,9 @@
 mod utils;
 
+use std::io::Write;
+
 use aes::cipher::BlockEncryptMut;
+use flate2::write::ZlibDecoder;
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
@@ -181,4 +184,29 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     }
 
     hash.0.to_vec()
+}
+
+#[wasm_bindgen]
+pub fn deflate(stream: Vec<u8>) -> Vec<u8> {
+    set_panic_hook();
+
+    let mut writer = Vec::new();
+    let mut z = ZlibDecoder::new(writer);
+    z.write_all(&stream[..]).unwrap();
+    writer = z.finish().unwrap();
+
+    let mut val = 0;
+    let mut str = String::new();
+    for i in &writer {
+        val += 1;
+        str.push_str(&format!("{:02X} ", i));
+
+        if val == 6 {
+            val = 0;
+            str.push('\n');
+        }
+    }
+    console_log!("{}", str);
+
+    writer
 }

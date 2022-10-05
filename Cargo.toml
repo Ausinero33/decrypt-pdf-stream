@@ -9,8 +9,8 @@ repository = "https://github.com/Ausinero33/decrypt-pdf-stream/"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["wee_alloc"]
-# default = ["console_error_panic_hook", "wee_alloc"]
+# default = ["wee_alloc"]
+default = ["console_error_panic_hook", "wee_alloc"]
 
 [dependencies]
 wasm-bindgen = "0.2.63"
@@ -21,6 +21,7 @@ cbc = "0.1.2"
 rand = "0.8.5"
 getrandom = {version = "0.2.7", features = ["js"]}
 rust-crypto-wasm = "0.3.1"
+flate2 = "1.0.24"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
