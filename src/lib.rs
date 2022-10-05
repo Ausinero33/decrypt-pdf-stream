@@ -1,9 +1,7 @@
 mod utils;
-
-use std::io::Write;
+mod deflate;
 
 use aes::cipher::BlockEncryptMut;
-use flate2::write::ZlibDecoder;
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
@@ -35,6 +33,8 @@ extern {
 macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
+
+pub(crate) use console_log;
 
 const PADDING: [u8; 32] = [0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00, 0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08,
                            0x2E, 0x2E, 0x00, 0xB6, 0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53, 0x69, 0x7A];
@@ -184,29 +184,4 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     }
 
     hash.0.to_vec()
-}
-
-#[wasm_bindgen]
-pub fn deflate(stream: Vec<u8>) -> Vec<u8> {
-    set_panic_hook();
-
-    let mut writer = Vec::new();
-    let mut z = ZlibDecoder::new(writer);
-    z.write_all(&stream[..]).unwrap();
-    writer = z.finish().unwrap();
-
-    let mut val = 0;
-    let mut str = String::new();
-    for i in &writer {
-        val += 1;
-        str.push_str(&format!("{:02X} ", i));
-
-        if val == 6 {
-            val = 0;
-            str.push('\n');
-        }
-    }
-    console_log!("{}", str);
-
-    writer
 }
