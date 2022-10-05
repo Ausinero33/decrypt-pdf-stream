@@ -4,8 +4,7 @@ use aes::cipher::BlockEncryptMut;
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
-use rc4::{consts::*, KeyInit, StreamCipher};
-use rc4::{Rc4};
+use crypto::{rc4::Rc4, symmetriccipher::SynchronousStreamCipher};
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
 use md5;
 
@@ -88,15 +87,16 @@ pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i
     }
 }
 
-fn use_rc4(mut data: Vec<u8>, key: Vec<u8>) -> Vec<u8> {
+fn use_rc4(data: Vec<u8>, key: Vec<u8>) -> Vec<u8> {
     console_log!("Using RC4");
 
     let hash = md5::compute(key);
 
-    let mut rc4 = Rc4::<U16>::new(hash.as_slice().into());
-    rc4.apply_keystream(&mut data);
-
-    data
+    let mut res = Vec::new();
+    let mut rc4 = Rc4::new(&hash.0);
+    rc4.process(&data, &mut res);
+    
+    res
 }
 
 fn use_aes_encrypt(data: Vec<u8>, mut key: Vec<u8>) -> Vec<u8> {
