@@ -179,3 +179,28 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
 
     hash.0.to_vec()
 }
+
+#[wasm_bindgen]
+pub struct Stream {
+    data: Vec<u8>,
+}
+
+#[wasm_bindgen]
+impl Stream {
+    #[wasm_bindgen(constructor)]
+    pub fn new(data: Vec<u8>) -> Self {
+        Self { 
+            data 
+        }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn data(&self) -> Vec<u8> {
+        self.data.clone()
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_data(&mut self, data: Vec<u8>) {
+        self.data = data;
+    }
+}
