@@ -49,6 +49,39 @@ pub fn deflate(stream: Vec<u8>, column: i32) -> Vec<u8> {
     writer
 }
 
+#[wasm_bindgen]
+pub fn format_stream(stream: Vec<u8>, w: Vec<i32>) -> String {
+    assert!(w.len() == 3);
+
+    let mut res = String::new();
+
+    let mut line = String::new();
+    let mut i = 0;
+    while i < stream.len() {
+        for _j in 0..w[0] {
+            line.push_str(&format!("{:02X}", i));
+            i += 1;
+        }
+        line.push(' ');
+
+        for _j in 0..w[1] {
+            line.push_str(&format!("{:02X}", i));
+            i += 1;
+        }
+        line.push(' ');
+
+        for _j in 0..w[2] {
+            line.push_str(&format!("{:02X}", i));
+            i += 1;
+        }
+        line.push('\n');
+        res.push_str(&line);
+        line.clear();
+    }
+
+    res
+}
+
 fn filter_up(data: Vec<u8>, column: usize) -> Vec<u8> {
     let mut res = Vec::new();
 
