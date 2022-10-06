@@ -38,53 +38,49 @@ type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
 
 // https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf
 
+// #[wasm_bindgen]
+// pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
+//     let obj_num = &obj_num.to_le_bytes()[0..3];
+//     let gen_num = &gen_num.to_le_bytes()[0..2];
+// 
+//     let mut new_key = key;
+//     new_key.append(&mut obj_num.to_vec());
+//     new_key.append(&mut gen_num.to_vec());
+// 
+//     let data = stream;
+// 
+//     if rev < 4 {
+//         use_rc4(data, new_key)
+//     } else {
+//         match cfm {
+//             "None" => data,
+//             "V2" => use_rc4(data, new_key),
+//             "AESV2" => use_aes_encrypt(data, new_key),
+//             _ => panic!("Wrong CFM")
+//         }
+//     }
+// }
+
 #[wasm_bindgen]
-pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
+pub fn decrypt(obj_num: i32, gen_num: i32, key: &[u8], stream: &[u8], rev: i32, cfm: &str) -> Vec<u8> {
     let obj_num = &obj_num.to_le_bytes()[0..3];
     let gen_num = &gen_num.to_le_bytes()[0..2];
 
-    let mut new_key = key;
-    new_key.append(&mut obj_num.to_vec());
-    new_key.append(&mut gen_num.to_vec());
-
-    let data = stream;
+    let new_key = [key, obj_num, gen_num].concat();
 
     if rev < 4 {
-        use_rc4(data, new_key)
+        use_rc4(stream, &new_key)
     } else {
         match cfm {
-            "None" => data,
-            "V2" => use_rc4(data, new_key),
-            "AESV2" => use_aes_encrypt(data, new_key),
+            "None" => stream.to_vec(),
+            "V2" => use_rc4(stream, &new_key),
+            "AESV2" => use_aes_decrypt(stream, new_key),
             _ => panic!("Wrong CFM")
         }
     }
 }
 
-#[wasm_bindgen]
-pub fn decrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
-    let obj_num = &obj_num.to_le_bytes()[0..3];
-    let gen_num = &gen_num.to_le_bytes()[0..2];
-
-    let mut new_key = key;
-    new_key.append(&mut obj_num.to_vec());
-    new_key.append(&mut gen_num.to_vec());
-
-    let data = stream;
-
-    if rev < 4 {
-        use_rc4(data, new_key)
-    } else {
-        match cfm {
-            "None" => data,
-            "V2" => use_rc4(data, new_key),
-            "AESV2" => use_aes_decrypt(data, new_key),
-            _ => panic!("Wrong CFM")
-        }
-    }
-}
-
-fn use_rc4(data: Vec<u8>, key: Vec<u8>) -> Vec<u8> {
+fn use_rc4(data: &[u8], key: &[u8]) -> Vec<u8> {
     console_log!("Using RC4");
 
     let hash = md5::compute(key);
@@ -96,7 +92,7 @@ fn use_rc4(data: Vec<u8>, key: Vec<u8>) -> Vec<u8> {
     res
 }
 
-fn use_aes_encrypt(data: Vec<u8>, mut key: Vec<u8>) -> Vec<u8> {
+fn use_aes_encrypt(data: &[u8], mut key: Vec<u8>) -> Vec<u8> {
     console_log!("Using AES");
 
     key.append(&mut vec![0x73, 0x41, 0x6C, 0x54]);
@@ -181,26 +177,28 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
-pub struct Stream {
-    data: Vec<u8>,
+pub struct Object {
+    stream: Vec<u8>,
+
+
 }
 
 #[wasm_bindgen]
-impl Stream {
+impl Object {
     #[wasm_bindgen(constructor)]
-    pub fn new(data: Vec<u8>) -> Self {
+    pub fn new(stream: Vec<u8>) -> Self {
         Self { 
-            data 
+            stream,
         }
     }
 
     #[wasm_bindgen(getter)]
-    pub fn data(&self) -> Vec<u8> {
-        self.data.clone()
+    pub fn stream(&self) -> Vec<u8> {
+        self.stream.clone()
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_data(&mut self, data: Vec<u8>) {
-        self.data = data;
+    pub fn set_stream(&mut self, stream: Vec<u8>) {
+        self.stream = stream;
     }
 }
