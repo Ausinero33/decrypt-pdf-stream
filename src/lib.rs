@@ -1,6 +1,8 @@
 mod utils;
 mod deflate;
 
+use std::sync::Mutex;
+
 use aes::cipher::BlockEncryptMut;
 use hex::FromHex;
 use utils::set_panic_hook;
@@ -8,6 +10,8 @@ use wasm_bindgen::prelude::*;
 use crypto::{rc4::Rc4, symmetriccipher::SynchronousStreamCipher};
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
 use md5;
+
+static PDF_OBJECTS: Mutex<Vec<Object>> = Mutex::new(Vec::new());
 
 #[wasm_bindgen]
 extern {
@@ -176,6 +180,7 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     hash.0.to_vec()
 }
 
+#[derive(Clone, Copy)]
 enum Filter {
     // Values: Predictor, Colors, BitsPerComponent, Columns
     FlateDecode(i32, i32, i32, i32),
@@ -183,38 +188,18 @@ enum Filter {
     LZWDecode(i32, i32, i32, i32, i32),
 }
 
-#[wasm_bindgen]
+#[derive(Default)]
 pub struct Object {
     stream: Vec<u8>,
     filter: Option<Filter>,
 }
 
+// TODO Returns the Object stored in PDF_OBJECTS
+pub fn get_obj(obj_num: i32) -> Object {
+    Object::default()
+}
+
 #[wasm_bindgen]
-impl Object {
-    #[wasm_bindgen(constructor)]
-    pub fn new(stream: Vec<u8>) -> Self {
-        Self { 
-            stream,
-            filter: None,
-        }
-    }
-
-    #[wasm_bindgen(constructor)]
-    pub fn parse_obj() -> Self {
-        Self {
-            stream: Vec::new(),
-            filter: None,
-        }
-    }
-
-
-    #[wasm_bindgen(getter)]
-    pub fn stream(&self) -> Vec<u8> {
-        self.stream.clone()
-    }
-
-    #[wasm_bindgen(setter)]
-    pub fn set_stream(&mut self, stream: Vec<u8>) {
-        self.stream = stream;
-    }
+pub fn parse_obj() {
+    PDF_OBJECTS.lock().unwrap().push(Object::default())
 }

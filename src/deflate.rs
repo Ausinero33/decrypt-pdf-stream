@@ -7,8 +7,10 @@ use crate::*;
 
 #[allow(dead_code)]
 #[wasm_bindgen]
-pub fn decompress(obj: Object) -> Vec<u8> {
+pub unsafe fn decompress(obj_num: i32) -> Vec<u8> {
     set_panic_hook();
+
+    let obj = get_obj(obj_num);
 
     if let Some(filter) = obj.filter {
         match filter {
@@ -25,7 +27,7 @@ pub fn decompress(obj: Object) -> Vec<u8> {
             }
         }
     } else {
-        obj.stream
+        obj.stream.clone()
     }
 }
 
