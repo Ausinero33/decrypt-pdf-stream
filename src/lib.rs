@@ -11,7 +11,7 @@ use crypto::{rc4::Rc4, symmetriccipher::SynchronousStreamCipher};
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
 use md5;
 
-static PDF_OBJECTS: Mutex<Vec<Object>> = Mutex::new(Vec::new());
+static PDF_OBJECTS: Mutex<PDF> = Mutex::new(PDF::new());
 
 #[wasm_bindgen]
 extern {
@@ -189,13 +189,18 @@ enum Filter {
 }
 
 #[derive(Default)]
-pub struct Object {
+struct Object {
     stream: Vec<u8>,
     filter: Option<Filter>,
 }
 
+struct PDF {
+    // encryption_info: //TODO
+    objects: Vec<Object>,
+}
+
 // TODO Returns the Object stored in PDF_OBJECTS
-pub fn get_obj(obj_num: i32) -> Object {
+fn get_obj(obj_num: i32) -> Object {
     Object::default()
 }
 
