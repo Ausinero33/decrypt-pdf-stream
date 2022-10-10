@@ -62,18 +62,18 @@ type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
 // }
 
 #[wasm_bindgen]
-pub fn decrypt(obj_num: i32, gen_num: i32, key: &[u8], stream: &[u8], rev: i32, cfm: &str) -> Vec<u8> {
+pub fn decrypt(obj_num: i32, gen_num: i32, key: &[u8], stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
     let obj_num = &obj_num.to_le_bytes()[0..3];
     let gen_num = &gen_num.to_le_bytes()[0..2];
 
     let new_key = [key, obj_num, gen_num].concat();
 
     if rev < 4 {
-        use_rc4(stream, &new_key)
+        use_rc4(&stream, &new_key)
     } else {
         match cfm {
             "None" => stream.to_vec(),
-            "V2" => use_rc4(stream, &new_key),
+            "V2" => use_rc4(&stream, &new_key),
             "AESV2" => use_aes_decrypt(stream, new_key),
             _ => panic!("Wrong CFM")
         }
@@ -176,11 +176,17 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     hash.0.to_vec()
 }
 
+enum Filter {
+    // Values: Predictor, Colors, BitsPerComponent, Columns
+    FlateDecode(i32, i32, i32, i32),
+    // Values: Predictor, Colors, BitsPerComponent, Columns, EarlyChange
+    LZWDecode(i32, i32, i32, i32, i32),
+}
+
 #[wasm_bindgen]
 pub struct Object {
     stream: Vec<u8>,
-
-
+    filter: Option<Filter>,
 }
 
 #[wasm_bindgen]
@@ -189,8 +195,18 @@ impl Object {
     pub fn new(stream: Vec<u8>) -> Self {
         Self { 
             stream,
+            filter: None,
         }
     }
+
+    #[wasm_bindgen(constructor)]
+    pub fn parse_obj() -> Self {
+        Self {
+            stream: Vec::new(),
+            filter: None,
+        }
+    }
+
 
     #[wasm_bindgen(getter)]
     pub fn stream(&self) -> Vec<u8> {
