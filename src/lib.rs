@@ -4,14 +4,18 @@ mod deflate;
 use std::sync::Mutex;
 
 use aes::cipher::BlockEncryptMut;
+use deflate::filters::FlateDecode;
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
 use crypto::{rc4::Rc4, symmetriccipher::SynchronousStreamCipher};
 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
 use md5;
+use lazy_static::lazy_static;
 
-static PDF_OBJECTS: Mutex<PDF> = Mutex::new(PDF::new());
+lazy_static! {
+    static ref PDF: Mutex<PDF_Struct> = Mutex::new(PDF_Struct::new());
+}
 
 #[wasm_bindgen]
 extern {
@@ -42,28 +46,28 @@ type Aes128CbcEnc = cbc::Encryptor<aes::Aes128>;
 
 // https://opensource.adobe.com/dc-acrobat-sdk-docs/standards/pdfstandards/pdf/PDF32000_2008.pdf
 
-// #[wasm_bindgen]
-// pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
-//     let obj_num = &obj_num.to_le_bytes()[0..3];
-//     let gen_num = &gen_num.to_le_bytes()[0..2];
-// 
-//     let mut new_key = key;
-//     new_key.append(&mut obj_num.to_vec());
-//     new_key.append(&mut gen_num.to_vec());
-// 
-//     let data = stream;
-// 
-//     if rev < 4 {
-//         use_rc4(data, new_key)
-//     } else {
-//         match cfm {
-//             "None" => data,
-//             "V2" => use_rc4(data, new_key),
-//             "AESV2" => use_aes_encrypt(data, new_key),
-//             _ => panic!("Wrong CFM")
-//         }
-//     }
-// }
+#[wasm_bindgen]
+pub fn encrypt(obj_num: i32, gen_num: i32, key: Vec<u8>, stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
+    let obj_num = &obj_num.to_le_bytes()[0..3];
+    let gen_num = &gen_num.to_le_bytes()[0..2];
+
+    let mut new_key = key;
+    new_key.append(&mut obj_num.to_vec());
+    new_key.append(&mut gen_num.to_vec());
+
+    let data = stream;
+
+    if rev < 4 {
+        use_rc4(&data, &new_key)
+    } else {
+        match cfm {
+            "None" => data,
+            "V2" => use_rc4(&data, &new_key),
+            "AESV2" => use_aes_encrypt(&data, new_key),
+            _ => panic!("Wrong CFM")
+        }
+    }
+}
 
 #[wasm_bindgen]
 pub fn decrypt(obj_num: i32, gen_num: i32, key: &[u8], stream: Vec<u8>, rev: i32, cfm: &str) -> Vec<u8> {
@@ -91,7 +95,7 @@ fn use_rc4(data: &[u8], key: &[u8]) -> Vec<u8> {
 
     let mut res = Vec::new();
     let mut rc4 = Rc4::new(&hash.0);
-    rc4.process(&data, &mut res);
+    rc4.process(data, &mut res);
     
     res
 }
@@ -180,31 +184,56 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
     hash.0.to_vec()
 }
 
-#[derive(Clone, Copy)]
-enum Filter {
-    // Values: Predictor, Colors, BitsPerComponent, Columns
-    FlateDecode(i32, i32, i32, i32),
-    // Values: Predictor, Colors, BitsPerComponent, Columns, EarlyChange
-    LZWDecode(i32, i32, i32, i32, i32),
-}
+// #[derive(Clone, Copy)]
+// enum Filter {
+//     // Values: Predictor, Colors, BitsPerComponent, Columns
+//     FlateDecode(i32, i32, i32, i32),
+//     // Values: Predictor, Colors, BitsPerComponent, Columns, EarlyChange
+//     LZWDecode(i32, i32, i32, i32, i32),
+// }
+
 
 #[derive(Default)]
 struct Object {
     stream: Vec<u8>,
-    filter: Option<Filter>,
+    filter: Option<Box<dyn crate::deflate::filters::Filter + Send + Sync>>,
 }
 
-struct PDF {
+struct PDF_Struct {
     // encryption_info: //TODO
     objects: Vec<Object>,
 }
 
+impl PDF_Struct {
+    pub fn new() -> Self {
+        Self { 
+            objects: Vec::new() 
+        }
+    }
+}
+
 // TODO Returns the Object stored in PDF_OBJECTS
 fn get_obj(obj_num: i32) -> Object {
-    Object::default()
+    PDF.lock().unwrap().objects.pop().unwrap()
 }
 
 #[wasm_bindgen]
 pub fn parse_obj() {
-    PDF_OBJECTS.lock().unwrap().push(Object::default())
+    // TODO
+    PDF.lock().unwrap().objects.push(Object::default())
+}
+
+#[wasm_bindgen]
+pub fn add_obj(index_start: usize, index_end: usize, doc: &[u8]) {
+    console_log!("{:02X?}", doc[index_start..index_end].to_vec());
+    PDF.lock().unwrap().objects.push(
+        Object { 
+            stream: doc[index_start..index_end].to_vec(), 
+            filter: Some(Box::new(FlateDecode {
+                predictor: 12,
+                columns: 5,
+                ..Default::default()
+            }))
+        }
+    )
 }
