@@ -4,7 +4,7 @@ mod deflate;
 use std::sync::Mutex;
 
 use aes::cipher::BlockEncryptMut;
-use deflate::filters::FlateDecode;
+use deflate::filters::{FlateDecode, Filter};
 use hex::FromHex;
 use utils::set_panic_hook;
 use wasm_bindgen::prelude::*;
@@ -14,7 +14,7 @@ use md5;
 use lazy_static::lazy_static;
 
 lazy_static! {
-    static ref PDF: Mutex<PDF_Struct> = Mutex::new(PDF_Struct::new());
+    static ref PDF: Mutex<PdfStruct> = Mutex::new(PdfStruct::new());
 }
 
 #[wasm_bindgen]
@@ -194,17 +194,17 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
 
 
 #[derive(Default)]
-struct Object {
+struct Object<T: Filter + Send + Sync> {
     stream: Vec<u8>,
-    filter: Option<Box<dyn crate::deflate::filters::Filter + Send + Sync>>,
+    filter: Option<T>,
 }
 
-struct PDF_Struct {
+struct PdfStruct<'a> {
     // encryption_info: //TODO
-    objects: Vec<Object>,
+    objects: Vec<Object<&'a dyn Filter + Send + Sync>>,
 }
 
-impl PDF_Struct {
+impl<'a> PdfStruct<'a> {
     pub fn new() -> Self {
         Self { 
             objects: Vec::new() 
@@ -213,8 +213,8 @@ impl PDF_Struct {
 }
 
 // TODO Returns the Object stored in PDF_OBJECTS
-fn get_obj(obj_num: i32) -> Object {
-    PDF.lock().unwrap().objects.pop().unwrap()
+fn get_obj<T: Filter + Send + Sync>(obj_num: i32) -> Object<T> {
+    PDF.lock().unwrap().objects.pop().unwrap_or_default()
 }
 
 #[wasm_bindgen]

@@ -28,8 +28,6 @@ impl Filter for FlateDecode {
 unsafe impl Send for FlateDecode {}
 unsafe impl Sync for FlateDecode {}
 
-//     // Values: Predictor, Colors, BitsPerComponent, Columns, EarlyChange
-//     LZWDecode(i32, i32, i32, i32, i32),
 #[derive(Default)]
 pub struct LZWDecode {
     pub predictor: i32,
