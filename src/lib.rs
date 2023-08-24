@@ -208,19 +208,19 @@ pub fn get_key_from_password(pw: &str, o: Vec<u8>, p: i32, id: Vec<u8>, rev: i32
     pswd_padded.truncate(32);
 
     if pswd_padded.len() < 32 {
-        for i in 0..pswd_padded.len() - 1 {
+        for i in 0..32 - pswd_padded.len() {
             pswd_padded.push(PADDING[i]);
         }
     }
 
-    let mut tmp = o.clone();
-    pswd_padded.append(&mut tmp);
+    let mut o_tmp = o.clone();
+    pswd_padded.append(&mut o_tmp);
 
     let mut p_array = Vec::from(p.to_le_bytes());
     pswd_padded.append(&mut p_array);
 
-    let mut tmp = id.clone();
-    pswd_padded.append(&mut tmp);
+    let mut id_mut = id.clone();
+    pswd_padded.append(&mut id_mut);
 
     if rev >= 4 {
         pswd_padded.append(&mut vec![0xFF, 0xFF, 0xFF, 0xFF]);
@@ -235,4 +235,23 @@ pub fn get_key_from_password(pw: &str, o: Vec<u8>, p: i32, id: Vec<u8>, rev: i32
     }
 
     hash.0.to_vec()
+}
+
+#[cfg(test)]
+mod tests {
+    use hex::FromHex;
+
+    use crate::{get_key_from_password, get_key};
+
+    #[test]
+    fn test_pw() {
+        let pw = "";
+        let o = Vec::from_hex("347a1c17c0286dc0bdad432e7246432b67404a5a19737b19ea10ea0b6b39f89e").unwrap();
+        let id = Vec::from_hex("a07832b34bb0befc21122fcc7cf669f9").unwrap();
+        let x = get_key_from_password(pw, o, -1044, id, 3);
+    
+
+        let y = get_key("347a1c17c0286dc0bdad432e7246432b67404a5a19737b19ea10ea0b6b39f89e", -1044, "a07832b34bb0befc21122fcc7cf669f9", 3);
+        assert_eq!(x, y);
+    }
 }
