@@ -203,8 +203,8 @@ pub fn get_key(o: &str, p: i32, id: &str, rev: i32) -> Vec<u8> {
 pub fn get_key_from_password(pw: &str, o: Vec<u8>, p: i32, id: Vec<u8>, rev: i32) -> Vec<u8> {
     set_panic_hook();
 
-  
-    let mut pswd_padded = Vec::from_hex(pw).unwrap();
+    let mut pswd_padded = Vec::from(pw.as_bytes());
+
     pswd_padded.truncate(32);
 
     if pswd_padded.len() < 32 {
@@ -213,14 +213,14 @@ pub fn get_key_from_password(pw: &str, o: Vec<u8>, p: i32, id: Vec<u8>, rev: i32
         }
     }
 
-    let mut o = Vec::from_hex(o).unwrap();
-    pswd_padded.append(&mut o);
+    let mut tmp = o.clone();
+    pswd_padded.append(&mut tmp);
 
     let mut p_array = Vec::from(p.to_le_bytes());
     pswd_padded.append(&mut p_array);
 
-    let mut id = Vec::from_hex(id).unwrap();
-    pswd_padded.append(&mut id);
+    let mut tmp = id.clone();
+    pswd_padded.append(&mut tmp);
 
     if rev >= 4 {
         pswd_padded.append(&mut vec![0xFF, 0xFF, 0xFF, 0xFF]);
